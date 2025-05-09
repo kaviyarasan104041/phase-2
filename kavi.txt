@@ -1,0 +1,67 @@
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import matplotlib.pyplot as plt
+import numpy as np
+# Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+# Normalize the image data (scaling from 0-255 to 0-1)
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+# Reshaping the data to add the channel dimension for CNN (grayscale image has 1 channel)
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
+# Build the CNN model
+model = models.Sequential([
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),  # Convolutional layer
+    layers.MaxPooling2D((2, 2)),  # Max pooling layer
+    layers.Conv2D(64, (3, 3), activation='relu'),  # Another convolutional layer
+    layers.MaxPooling2D((2, 2)),  # Max pooling layer
+    layers.Conv2D(64, (3, 3), activation='relu'),  # Third convolutional layer
+    layers.Flatten(),  # Flatten the 2D array into 1D
+    layers.Dense(64, activation='relu'),  # Fully connected layer
+    layers.Dense(10, activation='softmax')  # Output layer (10 classes for digits 0-9)
+])
+
+# Display model architecture
+model.summary()
+# Compile the model
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+# Train the model
+history = model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))
+# Evaluate the model on test data
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+
+print(f"Test accuracy: {test_acc}")
+# Plot training & validation accuracy values
+plt.plot(history.history['accuracy'], label='Train accuracy')
+plt.plot(history.history['val_accuracy'], label='Test accuracy')
+plt.title('Model accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(loc='upper left')
+plt.show()
+
+# Plot training & validation loss values
+plt.plot(history.history['loss'], label='Train loss')
+plt.plot(history.history['val_loss'], label='Test loss')
+plt.title('Model loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend(loc='upper left')
+plt.show()
+# Predict the first image in the test set
+predictions = model.predict(x_test)
+
+# Display the predicted digit and the actual digit
+predicted_label = np.argmax(predictions[0])
+actual_label = y_test[0]
+
+print(f"Predicted label: {predicted_label}")
+print(f"Actual label: {actual_label}")
+# Visualize an image from the test set
+plt.imshow(x_test[0].reshape(28, 28), cmap='gray')
+plt.title(f"Predicted: {predicted_label}, Actual: {actual_label}")
+plt.show()
